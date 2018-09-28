@@ -3,11 +3,16 @@ package com.example.kadohiraharuki.getapi
 import android.database.CursorJoiner
 import android.icu.lang.UCharacter.GraphemeClusterBreak.V
 import android.os.AsyncTask
+import android.os.Build
 import android.os.Bundle
+import android.support.annotation.RequiresApi
 import android.support.v7.app.AppCompatActivity
 import android.text.PrecomputedText
+import android.text.TextUtils.replace
 import android.util.Log
 import android.widget.Toast
+import com.beust.klaxon.JsonObject
+import com.parse.Parse
 import kotlinx.android.synthetic.main.activity_main.*
 import org.json.JSONArray
 import org.json.JSONException
@@ -18,7 +23,8 @@ import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.MalformedURLException
 import java.net.URL
-import java.util.ArrayList
+import java.util.*
+
 
 //https://qiita.com/minme31/items/a9636cb0453524c64e67  (参考記事)
 
@@ -36,6 +42,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     inner class HitAPITask : AsyncTask<String, String, String>() {
+
         override fun doInBackground(vararg params: String?): String {
             //ここでAPIを叩きます。バックグラウンドで処理する内容です。
             //HTTP固有の機能をサポートするURLConnection
@@ -51,7 +58,7 @@ class MainActivity : AppCompatActivity() {
                 val url = URL(params[0])
                 connection = url.openConnection() as HttpURLConnection
                 connection.connect()  //ここで指定したAPIを叩いてみてます。
-                Log.d("TAG","デバック")
+
 
                 //ここから叩いたAPIから帰ってきたデータを使えるよう処理していきます。
 
@@ -66,56 +73,25 @@ class MainActivity : AppCompatActivity() {
                         break
                     }
                     buffer.append(line)
-                    Log.d("CHECK", buffer.toString())
                 }
-
-                //部分わけしてみようと思ったが、試して失敗
-                /*val array = arrayListOf(buffer.toString())
-                val result: ArrayList<String> = arrayListOf()
-                for (i in 0..array.count()-1 step 40) {
-                    result.add(arrayListOf(array[i], array[i + 1], array[i + 2]).toString())
-
-                }
-                val sinceName= result[0]
-                */
-
-
-                /* //ここからは、今回はJSONなので、いわゆるJsonをParseする作業（Jsonの中の一つ一つのデータを取るような感じ）をしていきます。
-
-                 //先ほどbufferに入れた、取得した文字列
-                 val jsonText = buffer.toString()
-                 // .format型でデバック
-                 Log.d("CHECK2", jsonText.format())
-
-
-                 //JSONObjectを使って、まず全体のJSONObjectを取ります。
-                 val parentJsonObj = JSONArray(jsonText)
-                 Log.d("CHECK3", parentJsonObj.toString())*/
+                Log.d("CHECK", buffer.toString())
 
 
 
+                val jsonText = buffer.toString()
 
-                /*//今回のJSONは配列になっているので（データは一つですが）、全体のJSONObjectから、getJSONArrayで配列"movies"を取ります。
-                val parentJsonArray = parentJsonObj.getJSONArray("account")
-                //Log.d("CHECK4", parentJsonArray.toString())
+                val parentJsonObj = JSONArray(jsonText)
 
-                //JSONArrayの中身を取ります。映画"Your Name"のデータは、配列"movies"の０番目のデータなので、
-                detailJsonObj = parentJsonArray.getJSONObject(0)  //これもJSONObjectとして取得
-                */
+                val parentJSONObject = parentJsonObj.getJSONObject(0)
+
+                val login: String = parentJSONObject.getString("login")
+                Log.d("CHECK2", login.format())
 
 
-                /*//moviesの0番目のデータのtitle項目をStringで取ります。これで中身を取れました。
-                //val sinceName: String = detailJsonObj.getString("login")
-                //取得したAPIのloginをsinceNameに格納
-                val sinceName: String = parentJsonObj.getString("login")
-                Log.d("CHECK4", parentJsonObj.toString())
-                */
-                val array = arrayListOf(buffer.toString())
-                val sinceName =  array[0]
 
 
                 //Stringでreturnしてあげましょう。
-                return "$sinceName"  //
+                return "$login"  //
 
                 //ここから下は、接続エラーとかJSONのエラーとかで失敗した時にエラーを処理する為のものです。
             } catch (e: MalformedURLException) {

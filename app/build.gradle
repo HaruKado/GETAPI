@@ -23,6 +23,8 @@ android {
 }
 
 dependencies {
+    implementation 'com.beust:klaxon:3.0.1'
+    implementation 'com.parse:parse-android:1.15.7'
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:0.19.3"
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation"org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"

@@ -1,9 +1,11 @@
 package com.example.kadohiraharuki.getapi
 
 import android.content.Context
+import android.content.Intent
 import android.database.CursorJoiner
 import android.graphics.BitmapFactory
 import android.icu.lang.UCharacter.GraphemeClusterBreak.V
+import android.net.Uri
 import android.os.AsyncTask
 import android.os.Build
 import android.os.Bundle
@@ -46,6 +48,15 @@ class MainActivity : AppCompatActivity() {
             HitAPITask().execute("https://api.github.com/search/users?q="+s.trim()+"+sort:followers")
 
         }
+        listView.setOnItemClickListener { parent, view, position, id ->
+            val url: String = "https://github.com"
+            val intent = Intent(Intent.ACTION_VIEW)
+            intent.data = Uri.parse(url)
+            if(intent.resolveActivity(packageManager)!= null) {
+                startActivity(intent)
+            }
+        }
+
         //試しリスト
         val names = listOf(
                 "Ichiro",

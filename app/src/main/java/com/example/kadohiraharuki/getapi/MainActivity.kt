@@ -1,6 +1,8 @@
 package com.example.kadohiraharuki.getapi
 
+import android.content.Context
 import android.database.CursorJoiner
+import android.graphics.BitmapFactory
 import android.icu.lang.UCharacter.GraphemeClusterBreak.V
 import android.os.AsyncTask
 import android.os.Build
@@ -10,10 +12,15 @@ import android.support.v7.app.AppCompatActivity
 import android.text.PrecomputedText
 import android.text.TextUtils.replace
 import android.util.Log
-import android.widget.Toast
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.*
 import com.beust.klaxon.JsonObject
+import com.example.kadohiraharuki.getapi.R.id.listView
 import com.parse.Parse
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.list_item.*
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -35,9 +42,71 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         btn.setOnClickListener {
             //ボタンがクリックされたらAPIを叩く。
-            HitAPITask().execute("https://api.github.com/users")
+            val s =  search.toString()
+            HitAPITask().execute("https://api.github.com/search/users?q="+s.trim()+"+sort:followers")
 
         }
+        //試しリスト
+        val names = listOf(
+                "Ichiro",
+                "Ziro",
+                "Taro",
+                "Shiro")
+        val location = listOf(
+                "Hokkaido",
+                "Tokyo",
+                "Aizu",
+                "Kobe")
+        val images = listOf(
+                R.drawable.giraffe,
+                R.drawable.hippo,
+                R.drawable.lion,
+                R.drawable.ic_launcher_round)
+
+        data class UserData(val name: String, val loc: String, val imageId: Int)
+        val users = List(names.size) { i -> UserData(names[i], location[i], images[i])}
+
+        data class ViewHolder(val nameTextView: TextView, val locTextView: TextView, val userImgView: ImageView)
+
+        class UserListAdapter(context: Context, users: List<UserData>) : ArrayAdapter<UserData>(context, 0, users) {
+            private val layoutInflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+
+            override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View? {
+                var view = convertView
+                var holder: ViewHolder
+
+                if (view == null) {
+                    view = layoutInflater.inflate(R.layout.list_item, parent, false)
+                    holder = ViewHolder(
+                            view.findViewById(R.id.nameTextView),
+                            view.findViewById(R.id.locTextView),
+                            view.findViewById(R.id.userImgView)
+                    )
+                    view.tag = holder
+                } else {
+                    holder = view.tag as ViewHolder
+                }
+
+                val user = getItem(position) as UserData
+                holder.nameTextView.text = user.name
+                holder.locTextView.text = user.loc
+                holder.userImgView.setImageBitmap(BitmapFactory.decodeResource(context.resources, user.imageId))
+
+
+                return view
+            }
+        }
+        //listViewにUserListAdapterをセット
+        val arrayAdapter = UserListAdapter(this, users)
+        val listView : ListView = findViewById(R.id.listView)
+        listView.adapter = arrayAdapter
+
+        /*// 配列から ArrayAdapter を作成
+        val arrayAdapter = ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, items)
+
+        // レイアウトXMLから ListView を読み込み、リスト項目を設定
+        val listView : ListView = findViewById(R.id.listView)
+        listView.adapter = arrayAdapter */
 
     }
 
@@ -79,13 +148,17 @@ class MainActivity : AppCompatActivity() {
 
 
                 val jsonText = buffer.toString()
+                //val mapper = jacksonObjectMapper()
+
+                //val login = mapper.readValue<login>(jsonText)
 
                 val parentJsonObj = JSONArray(jsonText)
+                Log.d("CHECK2", parentJsonObj.toString())
 
-                val parentJSONObject = parentJsonObj.getJSONObject(0)
+                val parentJSONObject = parentJsonObj.getJSONObject(1)
 
                 val login: String = parentJSONObject.getString("login")
-                Log.d("CHECK2", login.format())
+                Log.d("CHECK3", login.format())
 
 
 

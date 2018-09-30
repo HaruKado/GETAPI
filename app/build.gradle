@@ -23,6 +23,7 @@ android {
 }
 
 dependencies {
+    //implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.9.0"
     implementation 'com.beust:klaxon:3.0.1'
     implementation 'com.parse:parse-android:1.15.7'
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:0.19.3"

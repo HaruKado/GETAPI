@@ -79,11 +79,31 @@ class MainActivity : AppCompatActivity() {
                 R.drawable.hippo,
                 R.drawable.lion,
                 R.drawable.ic_launcher_round)
+        val repository = listOf(
+                "20",
+                "17",
+                "3",
+                "32"
+        )
+        val follow = listOf(
+                "32",
+                "42",
+                "14",
+                "15"
+        )
+        val follower = listOf(
+                "18",
+                "82",
+                "0",
+                "10"
+        )
 
-        data class UserData(val name: String, val loc: String, val imageId: Int)
-        val users = List(names.size) { i -> UserData(names[i], location[i], images[i])}
 
-        data class ViewHolder(val nameTextView: TextView, val locTextView: TextView, val userImgView: ImageView)
+        data class UserData(val name: String, val loc: String, val imageId: Int, val repository: String, val follow: String, val follower: String)
+        val users = List(names.size) { i -> UserData(names[i], location[i], images[i], repository[i], follow[i], follower[i])}
+        //リストが上手くusersに格納されているかの確認
+        Log.d("data",users.toString())
+        data class ViewHolder(val nameTextView: TextView, val locTextView: TextView, val userImgView: ImageView, val repositoryTextView: TextView, val followTextView: TextView, val follwerTextView: TextView)
 
         class UserListAdapter(context: Context, users: List<UserData>) : ArrayAdapter<UserData>(context, 0, users) {
             private val layoutInflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
@@ -97,7 +117,10 @@ class MainActivity : AppCompatActivity() {
                     holder = ViewHolder(
                             view.findViewById(R.id.nameTextView),
                             view.findViewById(R.id.locTextView),
-                            view.findViewById(R.id.userImgView)
+                            view.findViewById(R.id.userImgView),
+                            view.findViewById(R.id.repositoryTextView),
+                            view.findViewById(R.id.followTextView),
+                            view.findViewById(R.id.followerTextView)
                     )
                     view.tag = holder
                 } else {
@@ -108,6 +131,9 @@ class MainActivity : AppCompatActivity() {
                 holder.nameTextView.text = user.name
                 holder.locTextView.text = user.loc
                 holder.userImgView.setImageBitmap(BitmapFactory.decodeResource(context.resources, user.imageId))
+                holder.repositoryTextView.text = user.repository
+                holder.followTextView.text = user.follow
+                holder.follwerTextView.text = user.follower
 
 
                 return view

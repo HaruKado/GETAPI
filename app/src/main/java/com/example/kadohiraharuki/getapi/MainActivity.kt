@@ -28,10 +28,13 @@ import org.json.JSONException
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.IOException
+import java.io.InputStream
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.MalformedURLException
+import java.net.URI
 import java.net.URL
+import java.sql.Connection
 import java.util.*
 
 
@@ -45,17 +48,20 @@ class MainActivity : AppCompatActivity() {
         btn.setOnClickListener {
             //ボタンがクリックされたらAPIを叩く。
             val s =  search.toString()
-            HitAPITask().execute("https://api.github.com/search/users?q="+s.trim()+"+sort:followers")
+            val uri = Uri.parse("https://api.github.com/search/users?q="+s.trim()+"+sort:followers")
+            HitAPITask().execute(uri)
 
         }
         listView.setOnItemClickListener { parent, view, position, id ->
-            val url: String = "https://github.com"
+            /*val url: String = "https://github.com"
             val intent = Intent(Intent.ACTION_VIEW)
-            intent.data = Uri.parse(url)
-            if(intent.resolveActivity(packageManager)!= null) {
+            intent.data = Uri.parse(url)*/
+            val intent = Intent(this, webview::class.java)
                 startActivity(intent)
-            }
+
         }
+
+
 
         //試しリスト
         val names = listOf(
@@ -111,19 +117,44 @@ class MainActivity : AppCompatActivity() {
         val arrayAdapter = UserListAdapter(this, users)
         val listView : ListView = findViewById(R.id.listView)
         listView.adapter = arrayAdapter
-
-        /*// 配列から ArrayAdapter を作成
-        val arrayAdapter = ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, items)
-
-        // レイアウトXMLから ListView を読み込み、リスト項目を設定
-        val listView : ListView = findViewById(R.id.listView)
-        listView.adapter = arrayAdapter */
-
     }
 
-    inner class HitAPITask : AsyncTask<String, String, String>() {
+    /*override fun onResume() {
+        super.onResume()
 
-        override fun doInBackground(vararg params: String?): String {
+        val intent = intent
+        val action = intent.action
+
+        if (action == Intent.ACTION_VIEW) {
+            val uri: Uri? = intent.data
+            if (uri != null) {
+
+                // 受け取るURIが
+                // simplemio://callback#access_token=token&state=success&token_type=Bearer&expires_in=7776000
+                // となっていて，正しくエンコードできないので # を ? に置き換える
+
+                var uriStr = uri.toString()
+                uriStr = uriStr.replace('#', '?')
+                val validUri = Uri.parse(uriStr)
+
+                val token = validUri.getQueryParameter("access_token")
+                val state = validUri.getQueryParameter("state")
+
+                if (state != "success") {
+                    Toast.makeText(this, "正しく認証することができませんでした．", Toast.LENGTH_LONG).show()
+                } else {
+                    MioUtil.saveToken(this, token)
+                    Toast.makeText(this, "トークン:" + token, Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }*/
+
+
+
+    inner class HitAPITask : AsyncTask<Uri, String, String>() {
+
+        override fun doInBackground(vararg params: Uri?): String {
             //ここでAPIを叩きます。バックグラウンドで処理する内容です。
             //HTTP固有の機能をサポートするURLConnection
             var connection: HttpURLConnection? = null
@@ -135,16 +166,17 @@ class MainActivity : AppCompatActivity() {
             try {
                 //param[0]にはAPIのURI(String)を入れます(後ほど)。
                 //AsynkTask<...>の一つめがStringな理由はURIをStringで指定するからです。
-                val url = URL(params[0])
-                connection = url.openConnection() as HttpURLConnection
-                connection.connect()  //ここで指定したAPIを叩いてみてます。
+                val uri = URI(params[0].toString())
+                connection = uri as HttpURLConnection
+                connection.connect()
+                  //ここで指定したAPIを叩いてみてます。
 
 
                 //ここから叩いたAPIから帰ってきたデータを使えるよう処理していきます。
 
                 //とりあえず取得した文字をbufferに。
-                val stream = connection.inputStream
-                reader = BufferedReader(InputStreamReader(stream))
+                val stream = connection
+                reader = BufferedReader(InputStreamReader(stream as InputStream))
                 buffer = StringBuffer()
                 var line: String?
                 while (true) {
@@ -172,7 +204,9 @@ class MainActivity : AppCompatActivity() {
                 Log.d("CHECK3", login.format())
 
 
+                fun getParseItems(jsonObject: JsonObject) {
 
+                }
 
                 //Stringでreturnしてあげましょう。
                 return "$login"  //

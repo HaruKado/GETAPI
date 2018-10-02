@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.AsyncTask
 import android.os.Build
 import android.os.Bundle
+import android.service.autofill.UserData
 import android.support.annotation.RequiresApi
 import android.support.v7.app.AppCompatActivity
 import android.text.PrecomputedText
@@ -21,11 +22,15 @@ import android.widget.*
 import com.beust.klaxon.JsonObject
 import com.example.kadohiraharuki.getapi.R.id.listView
 import com.parse.Parse
+import com.squareup.moshi.KotlinJsonAdapterFactory
+import com.squareup.moshi.Moshi
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.list_item.*
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+import retrofit2.Retrofit
+import retrofit2.converter.moshi.MoshiConverterFactory
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStream
@@ -48,8 +53,9 @@ class MainActivity : AppCompatActivity() {
         btn.setOnClickListener {
             //ボタンがクリックされたらAPIを叩く。
             val s =  search.toString()
-            val uri = Uri.parse("https://api.github.com/search/users?q="+s.trim()+"+sort:followers")
-            HitAPITask().execute(uri)
+            HitAPITask().execute("https://api.github.com/search/users?q=Suzuki")
+                    //""+s.trim()+"+sort:followers")
+
 
         }
         listView.setOnItemClickListener { parent, view, position, id ->
@@ -145,42 +151,12 @@ class MainActivity : AppCompatActivity() {
         listView.adapter = arrayAdapter
     }
 
-    /*override fun onResume() {
-        super.onResume()
-
-        val intent = intent
-        val action = intent.action
-
-        if (action == Intent.ACTION_VIEW) {
-            val uri: Uri? = intent.data
-            if (uri != null) {
-
-                // 受け取るURIが
-                // simplemio://callback#access_token=token&state=success&token_type=Bearer&expires_in=7776000
-                // となっていて，正しくエンコードできないので # を ? に置き換える
-
-                var uriStr = uri.toString()
-                uriStr = uriStr.replace('#', '?')
-                val validUri = Uri.parse(uriStr)
-
-                val token = validUri.getQueryParameter("access_token")
-                val state = validUri.getQueryParameter("state")
-
-                if (state != "success") {
-                    Toast.makeText(this, "正しく認証することができませんでした．", Toast.LENGTH_LONG).show()
-                } else {
-                    MioUtil.saveToken(this, token)
-                    Toast.makeText(this, "トークン:" + token, Toast.LENGTH_LONG).show()
-                }
-            }
-        }
-    }*/
 
 
 
-    inner class HitAPITask : AsyncTask<Uri, String, String>() {
+    inner class HitAPITask : AsyncTask<String, String, String>() {
 
-        override fun doInBackground(vararg params: Uri?): String {
+        override fun doInBackground(vararg params: String): String {
             //ここでAPIを叩きます。バックグラウンドで処理する内容です。
             //HTTP固有の機能をサポートするURLConnection
             var connection: HttpURLConnection? = null
@@ -192,8 +168,8 @@ class MainActivity : AppCompatActivity() {
             try {
                 //param[0]にはAPIのURI(String)を入れます(後ほど)。
                 //AsynkTask<...>の一つめがStringな理由はURIをStringで指定するからです。
-                val uri = URI(params[0].toString())
-                connection = uri as HttpURLConnection
+                val url = URL(params[0])
+                connection = url.openConnection() as HttpURLConnection
                 connection.connect()
                   //ここで指定したAPIを叩いてみてます。
 
@@ -201,8 +177,8 @@ class MainActivity : AppCompatActivity() {
                 //ここから叩いたAPIから帰ってきたデータを使えるよう処理していきます。
 
                 //とりあえず取得した文字をbufferに。
-                val stream = connection
-                reader = BufferedReader(InputStreamReader(stream as InputStream))
+                val stream = connection.inputStream
+                reader = BufferedReader(InputStreamReader(stream))
                 buffer = StringBuffer()
                 var line: String?
                 while (true) {
@@ -215,27 +191,27 @@ class MainActivity : AppCompatActivity() {
                 Log.d("CHECK", buffer.toString())
 
 
-
                 val jsonText = buffer.toString()
                 //val mapper = jacksonObjectMapper()
 
                 //val login = mapper.readValue<login>(jsonText)
 
-                val parentJsonObj = JSONArray(jsonText)
+
+                val parentJsonObj = JSONObject(jsonText)
                 Log.d("CHECK2", parentJsonObj.toString())
 
-                val parentJSONObject = parentJsonObj.getJSONObject(1)
+                val parentJSONOArray = parentJsonObj.getJSONArray("items")
 
-                val login: String = parentJSONObject.getString("login")
-                Log.d("CHECK3", login.format())
+                val detailJsonObj = parentJSONOArray.getJSONObject(0)
+                Log.d("CHECK3", detailJsonObj.toString())
+
+                val loginname: String = detailJsonObj.getString("login")
+                Log.d("CHECK4", loginname)
 
 
-                fun getParseItems(jsonObject: JsonObject) {
-
-                }
 
                 //Stringでreturnしてあげましょう。
-                return "$login"  //
+                return "$loginname"  //
 
                 //ここから下は、接続エラーとかJSONのエラーとかで失敗した時にエラーを処理する為のものです。
             } catch (e: MalformedURLException) {
